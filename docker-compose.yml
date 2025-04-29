@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: hotel_trivago
+      MYSQL_USER: trivago_user
+      MYSQL_PASSWORD: trivago_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - trivago_net
+
+  backend:
+    build: ./backend
+    container_name: backend
+    environment:
+      DB_HOST: mysql
+      DB_USER: trivago_user
+      DB_PASSWORD: trivago_pass
+      DB_NAME: hotel_trivago
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mysql
+    networks:
+      - trivago_net
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    networks:
+      - trivago_net
+
+volumes:
+  mysql_data:
+
+networks:
+  trivago_net:
+    driver: bridge
